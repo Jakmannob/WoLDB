@@ -18,14 +18,14 @@ tree = discord.app_commands.CommandTree(client)
 
 @tree.command(name="wakeupserver",
     description="A command that will invoke Wake on LAN to wake up the server.",
-    guild=discord.Object(id=server_id))
+    guild=discord.Object(id=int(server_id)))
 async def wake_up_server(interaction):
     send_magic_packet(mac, ip_address=ip, port=int(port))
     await interaction.response.send_message("Starting server! Please stand by.")
 
 @client.event
 async def on_ready():
-    await tree.sync(guild=discord.Object(id=server_id))
+    await tree.sync(guild=discord.Object(id=int(server_id)))
 
 
 client.run(discord_token)
