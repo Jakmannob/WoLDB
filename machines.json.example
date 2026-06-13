@@ -1,0 +1,6 @@
+{
+    "server": {
+        "mac": "aa:bb:cc:dd:ee:ff",
+        "description": "An example server"
+    }
+}

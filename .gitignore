@@ -1,3 +1,8 @@
+# WoLDB
+certs/
+machines.json
+*.service
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

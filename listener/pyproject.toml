@@ -1,0 +1,9 @@
+[project]
+name = "woldb-listener"
+version = "0.1.0"
+description = "Wake-on-LAN Listener Service"
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv",
+    "wakeonlan",
+]
