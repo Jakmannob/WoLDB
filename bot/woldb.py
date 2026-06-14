@@ -60,7 +60,7 @@ async def send_wake_command(machine_name: str) -> dict:
         await writer.wait_closed()
 
 
-@tree.command(
+@app_commands.command(
     name='wake',
     description='Send a Wake-on-LAN packet to a configured machine.',
 )
@@ -112,7 +112,9 @@ async def on_ready():
     global synced
     if not synced:
         for gid in GUILD_IDS:
-            await tree.sync(guild=discord.Object(id=gid))
+            g = discord.Object(id=gid)
+            tree.add_command(wake, guild=g)
+            await tree.sync(guild=g)
             log.info('Synced commands to guild %s', gid)
         synced = True
     log.info('Bot ready. Logged in as %s', client.user)
