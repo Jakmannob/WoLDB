@@ -29,7 +29,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     addr = writer.get_extra_info('peername')
     log.info('Connection from %s', addr)
     try:
-        data = await asyncio.wait_for(reader.read(4096), timeout=10)
+        data = await asyncio.wait_for(reader.readline(), timeout=10)
         request = json.loads(data.decode())
 
         if request.get('token') != SHARED_SECRET:
@@ -48,10 +48,10 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 log.info('WoL packet sent successfully to %s', machine_name)
                 response = {
                     'status': 'ok',
-                    'message': f'Wake packet sent to {machine_name} ({mac})',
+                    'message': f'Magic packet sent to {machine_name}',
                 }
 
-        writer.write(json.dumps(response).encode())
+        writer.write((json.dumps(response) + '\n').encode())
         await writer.drain()
     except asyncio.TimeoutError:
         log.warning('Client %s timed out', addr)
@@ -74,6 +74,7 @@ async def main():
     )
     addrs = ', '.join(str(s.getsockname()) for s in server.sockets)
     log.info('Listening on %s (TLS)', addrs)
+    log.info('Configured machines: %s', ', '.join(MACHINES))
 
     async with server:
         await server.serve_forever()

@@ -35,6 +35,7 @@ guild = discord.Object(id=GUILD_ID)
 
 async def send_wake_command(machine_name: str) -> dict:
     ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    ssl_ctx.check_hostname = False
     ssl_ctx.load_verify_locations(str(BASE_DIR / 'certs' / 'cert.pem'))
 
     reader, writer = await asyncio.open_connection(
@@ -42,11 +43,10 @@ async def send_wake_command(machine_name: str) -> dict:
     )
     try:
         request = json.dumps({'token': SHARED_SECRET, 'machine': machine_name})
-        writer.write(request.encode())
+        writer.write((request + '\n').encode())
         await writer.drain()
-        writer.write_eof()
 
-        response_data = await asyncio.wait_for(reader.read(4096), timeout=10)
+        response_data = await asyncio.wait_for(reader.readline(), timeout=10)
         return json.loads(response_data.decode())
     finally:
         writer.close()
@@ -68,6 +68,7 @@ async def wake(interaction: discord.Interaction, machine: str):
         )
         return
 
+    log.info('Wake command invoked for %s by %s', machine, interaction.user)
     await interaction.response.defer()
     try:
         response = await send_wake_command(machine)
@@ -106,6 +107,7 @@ async def on_ready():
         await tree.sync(guild=guild)
         synced = True
     log.info('Bot ready. Logged in as %s', client.user)
+    log.info('Configured machines: %s', ', '.join(MACHINES))
 
 
 client.run(DISCORD_TOKEN)
