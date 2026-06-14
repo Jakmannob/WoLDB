@@ -2,6 +2,7 @@
 certs/
 machines.json
 *.service
+*.pem
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
