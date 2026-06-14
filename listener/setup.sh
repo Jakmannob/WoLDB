@@ -23,7 +23,7 @@ if [ ! -f certs/cert.pem ]; then
     echo "Generating TLS certificate..."
     openssl req -x509 -newkey rsa:4096 \
         -keyout certs/key.pem -out certs/cert.pem \
-        -days 3650 -nodes \
+        -days 36500 -nodes \
         -subj '/CN=woldb-listener'
     chmod 600 certs/key.pem
     echo "Certificate generated."
