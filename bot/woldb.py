@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DISCORD_TOKEN = os.environ['DISCORD_TOKEN']
-GUILD_ID = int(os.environ['GUILD_ID'])
 LISTENER_HOST = os.environ['LISTENER_HOST']
 LISTENER_PORT = int(os.environ['LISTENER_PORT'])
 SHARED_SECRET = os.environ['SHARED_SECRET']
@@ -20,6 +19,8 @@ SHARED_SECRET = os.environ['SHARED_SECRET']
 BASE_DIR = Path(__file__).parent
 with open(BASE_DIR.parent / 'machines.json') as f:
     MACHINES = json.load(f)
+
+GUILD_IDS = {gid for m in MACHINES.values() for gid in m['guilds']}
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,7 +31,13 @@ log = logging.getLogger('woldb')
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
-guild = discord.Object(id=GUILD_ID)
+
+
+def machines_for_guild(guild_id: int) -> dict:
+    return {
+        name: info for name, info in MACHINES.items()
+        if guild_id in info['guilds']
+    }
 
 
 async def send_wake_command(machine_name: str) -> dict:
@@ -56,19 +63,18 @@ async def send_wake_command(machine_name: str) -> dict:
 @tree.command(
     name='wake',
     description='Send a Wake-on-LAN packet to a configured machine.',
-    guild=guild,
 )
 @app_commands.describe(machine='The machine to wake up')
 async def wake(interaction: discord.Interaction, machine: str):
-    if machine not in MACHINES:
+    allowed = machines_for_guild(interaction.guild_id)
+    if machine not in allowed:
         await interaction.response.send_message(
-            f'Unknown machine: `{machine}`. '
-            f'Available: {", ".join(MACHINES)}',
+            f'Unknown machine: `{machine}`.',
             ephemeral=True,
         )
         return
 
-    log.info('Wake command invoked for %s by %s', machine, interaction.user)
+    log.info('Wake command invoked for %s by %s in %s#%s', machine, interaction.user, interaction.guild.name, interaction.channel.name)
     await interaction.response.defer()
     try:
         response = await send_wake_command(machine)
@@ -90,9 +96,10 @@ async def wake(interaction: discord.Interaction, machine: str):
 async def machine_autocomplete(
     interaction: discord.Interaction, current: str,
 ) -> list[app_commands.Choice[str]]:
+    allowed = machines_for_guild(interaction.guild_id)
     return [
         app_commands.Choice(name=info['description'], value=name)
-        for name, info in MACHINES.items()
+        for name, info in allowed.items()
         if current.lower() in name.lower()
         or current.lower() in info['description'].lower()
     ]
@@ -104,10 +111,13 @@ synced = False
 async def on_ready():
     global synced
     if not synced:
-        await tree.sync(guild=guild)
+        for gid in GUILD_IDS:
+            await tree.sync(guild=discord.Object(id=gid))
+            log.info('Synced commands to guild %s', gid)
         synced = True
     log.info('Bot ready. Logged in as %s', client.user)
     log.info('Configured machines: %s', ', '.join(MACHINES))
+    log.info('Active guilds: %s', ', '.join(str(g) for g in GUILD_IDS))
 
 
 client.run(DISCORD_TOKEN)

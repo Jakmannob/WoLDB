@@ -1,6 +1,7 @@
 {
     "server": {
         "mac": "aa:bb:cc:dd:ee:ff",
-        "description": "An example server"
+        "description": "An example server",
+        "guilds": [123456789012345678]
     }
 }

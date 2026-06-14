@@ -29,7 +29,6 @@ fi
 if [ ! -f .env ]; then
     cat > .env <<EOF
 DISCORD_TOKEN=your_discord_bot_token
-GUILD_ID=your_discord_guild_id
 LISTENER_HOST=your_listener_ip_or_hostname
 LISTENER_PORT=9443
 SHARED_SECRET=paste_shared_secret_from_listener_setup
